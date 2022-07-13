@@ -2,10 +2,11 @@ import io
 import unittest
 import mock
 import filetype
+from xml.etree.ElementTree import ParseError as XMLParseError
 
 from willow.image import (
     Image, JPEGImageFile, PNGImageFile, GIFImageFile, UnrecognisedImageFormatError,
-    BMPImageFile, TIFFImageFile
+    BMPImageFile, TIFFImageFile, SVGImageFile
 )
 
 
@@ -52,6 +53,18 @@ class TestOpenImage(unittest.TestCase):
         f.seek(0)
 
         with self.assertRaises(UnrecognisedImageFormatError) as e:
+            Image.open(f)
+
+    def test_opens_svg(self):
+        f = io.BytesIO(b"<svg></svg>")
+        image = Image.open(f)
+        self.assertIsInstance(image, SVGImageFile)
+        self.assertEqual(image.format_name, "svg")
+        self.assertEqual(image.original_format, "svg")
+
+    def test_invalid_svg_raises(self):
+        f = io.BytesIO(b"<svg><")
+        with self.assertRaises(XMLParseError):
             Image.open(f)
 
 
